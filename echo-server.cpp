@@ -91,20 +91,21 @@ void recvThread(int sd) {
 		buf[res] = '\0';
 		printf("%s", buf);
 		fflush(stdout);
+        if (param.echo) {
+            res = ::send(sd, buf, res, 0);
+            if (res == 0 || res == -1) {
+                fprintf(stderr, "send return %zd", res);
+                myerror(" ");
+                break;
+            }
+        }
         if (param.broadcast) {
             std::lock_guard<std::mutex> guard(sockMutex);
             for (int csd : clientSocks) {
                 if (csd == sd) continue;
                 ::send(csd, buf, res, 0);
             }
-        } else if (param.echo) {
-			res = ::send(sd, buf, res, 0);
-			if (res == 0 || res == -1) {
-				fprintf(stderr, "send return %zd", res);
-				myerror(" ");
-				break;
-			}
-		}
+        }
 	}
 	printf("disconnected\n");
     fflush(stdout);
